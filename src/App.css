@@ -1,38 +1,42 @@
-.App {
-  text-align: center;
-}
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
+/* DataTableDemo.css */
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+.datatable-crud .table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+@media screen and (max-width: 960px) {
+  .datatable-crud .table-header {
+      align-items: flex-start;
   }
 }
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.datatable-crud .product-image {
+  width: 100px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+}
+.datatable-crud .p-dialog .product-image {
+  width: 150px;
+  margin: 0 auto 2rem auto;
+  display: block;
+}
+.datatable-crud .confirmation-content {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+@media screen and (max-width: 960px) {
+  .datatable-crud .p-toolbar {
+      flex-wrap: wrap;
   }
-  to {
-    transform: rotate(360deg);
+  .datatable-crud .p-toolbar .p-button {
+      margin-bottom: 0.25rem;
+  }
+  .datatable-crud .table-header {
+      flex-direction: column;
+  }
+  .datatable-crud .table-header .p-input-icon-left, .datatable-crud .table-header input {
+      width: 100%;
   }
 }
+               
