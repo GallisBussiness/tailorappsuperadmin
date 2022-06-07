@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import "primereact/resources/themes/tailwind-light/theme.css";  
+import "primereact/resources/themes/md-light-indigo/theme.css";  
 import "primereact/resources/primereact.min.css";             
 import "primeicons/primeicons.css";    
 import './index.css';
