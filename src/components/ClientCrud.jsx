@@ -10,24 +10,53 @@ import { Dialog } from 'primereact/dialog';
 import {ConfirmDialog,confirmDialog } from 'primereact/confirmdialog';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { createClient, deleteClient, getAllClients, updateClient } from '../services/clientService'
-import { useForm } from 'react-hook-form';
+import {Controller, useForm } from 'react-hook-form';
+import { InputMask } from 'primereact/inputmask'
+import { classNames } from 'primereact/utils';
+import {GiBodyHeight} from 'react-icons/gi'
+import { createMesure } from '../services/MesureService';
 
 
 const ClientCrud = () => {
 const [selectedClients,setSelectedClients] = useState([])
 const [globalFilter, setGlobalFilter] = useState('');
+const [clientId,setClientId] = useState('');
+const [isCreateMesure,setIsCreateMesure] = useState(false);
 const [c,setC] = useState(false)
 const toast = useRef(null);
 const dt = useRef(null);
 const qc = useQueryClient()
-const { register, handleSubmit } = useForm();
+
+
+const defaultValues = {prenom:'',nom:'',tel:'',adresse:''}
+const defaultValuesMesure = {lon:'',lar:'',cou:'',client: clientId}
+
+const { control, handleSubmit, formState: {errors} } = useForm({defaultValues});
+
+const { control: controlMesure, handleSubmit: handleSubmitMesure, formState:{errors:errorsMesure}} = useForm({defaultValues: defaultValuesMesure})
+
+const getFormErrorMessage = (name) => {
+    return errors[name] && <small className="p-error">{errors[name].message}</small>
+};
+
+const getFormErrorMessageMesure = (name) => {
+    return errorsMesure[name] && <small className="p-error">{errorsMesure[name].message}</small>
+};
+
 
 const qk = ['getClients']
 const { data } = useQuery(qk, () => getAllClients(), { 
     staleTime: 100_000,
-    onSuccess:(_) => {}
 })
 
+const {mutate:mutateMesure,isLoading:isLoadingMesure} = useMutation((data) => createMesure(data),{
+    onSuccess:(_) => {
+        toast.current.show({ severity: 'info', summary: 'Creation Mesure', detail: 'Mesure crée !!', life: 3000 });
+    },
+    onError:(_) => {
+        toast.current.show({ severity: 'warn', summary: 'Creation Mesure', detail: 'Une erreur !!', life: 3000 });
+    }
+}) 
 const cClient = () => setC(true);
 
 const cancelCClient = () => setC(false);
@@ -63,10 +92,30 @@ const {mutate:del} = useMutation((id) => deleteClient(id), {
     }
 });
 
-const onSubmit = (data) => mutate(data);
+const onSubmit = (data) => {
+    mutate(data);
+}
+
+const onSubmitMesure = (data) => {
+    
+    mutateMesure(data);
+}
 
 const textEditor = (options) => {
     return <InputText type="text" className="text-sm font-medium text-gray-900 dark:text-gray-300 py-2" value={options.value} onChange={(e) => options.editorCallback(e.target.value)} />;
+}
+
+const editMesure = ({_id}) => {
+    setClientId(_id);
+    setIsCreateMesure(true);
+}
+
+const actionBodyTemplate = (rowData) => {
+    return (
+        <>
+            <Button icon={<GiBodyHeight />} className="p-button-rounded p-button-success mr-2" onClick={() => editMesure(rowData)} />
+        </>
+    );
 }
 
 const onRowEditComplete = (e) => {
@@ -147,35 +196,71 @@ const header =  () => (
         <Column field="prenom" header="Prenom" editor={(options) => textEditor(options)}  sortable style={{ minWidth: '12rem' }}></Column>
         <Column field="nom" header="Nom" editor={(options) => textEditor(options)}  sortable style={{ minWidth: '16rem' }}></Column>
         <Column field="tel" editor={(options) => textEditor(options)} header="Telephone"></Column>
+        <Column field="adresse" editor={(options) => textEditor(options)} header="Adrese"></Column>
+        <Column body={actionBodyTemplate} exportable={false} style={{ minWidth: '8rem' }}></Column>
         <Column  rowEditor headerStyle={{ width: '10%', minWidth: '8rem' }} bodyStyle={{ textAlign: 'center' }}></Column>
     </DataTable>
 </div>
 <Dialog header="Ajouter un client" visible={c} style={{ width: '50vw' }} onHide={() => cancelCClient()}>
-    <form onSubmit={handleSubmit(onSubmit)} >
-    <div className="field flex flex-col space-y-2">
-        <label htmlFor="prenom" className="block">Prenom</label>
-        <InputText id="prenom" {...register('prenom', {required: true})} aria-describedby="prenom" placeholder="Prenom"
-         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"/>
-    </div>
-    <div className="field flex flex-col space-y-2">
-        <label htmlFor="nom" className="block">Nom</label>
-        <InputText id="nom" {...register('nom', {required: true})} aria-describedby="nom" placeholder="Nom"
-         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"/>
-    </div>
-    <div className="field flex flex-col space-y-2">
-        <label htmlFor="tel" className="block">Telephone</label>
-        <InputText id="tel" {...register('tel', {required: true})} aria-describedby="tel" placeholder="Numéro de telephone"
-         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"/>
-    </div>
-    <div className="field flex flex-col space-y-2">
-        <label htmlFor="adresse" className="block">Adresse</label>
-        <InputText id="adresse" {...register('adresse', {required: true})} aria-describedby="adresse" placeholder="Adresse"
-         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"/>
-    </div>
-    <Button  label="Sauvegarder" loading={isLoading} className="p-button-success my-4" />
-    </form>
+<form onSubmit={handleSubmit(onSubmit)} className="p-fluid space-y-2">
+                  <div className="field">               
+                  <Controller control={control} name="prenom" rules={{required: 'Votre prénom est obligatoire'}} render={({field,fieldState}) => (
+                    <InputText {...field} autoFocus className={classNames({ 'p-invalid': fieldState.error })} placeholder="Prenom*" />
+                    )} />
+                      {getFormErrorMessage('prenom')}
+                  </div>
+                  <div className="field">               
+                  <Controller control={control} name="nom" rules={{required: 'Votre nom est obligatoire'}} render={({field,fieldState}) => (
+                    <InputText {...field} autoFocus className={classNames({ 'p-invalid': fieldState.error })} placeholder="Nom*" />
+                    )} />
+                      {getFormErrorMessage('nom')}
+                  </div>
+                    <div className="field">
+                        <Controller control={control} name="tel" rules={{required: 'Votre numéro de téléphone est obligatoire'}} render={({field,fieldState}) => (
+                           <InputMask mask="999999999" {...field} className={classNames({ 'p-invalid': fieldState.error })} placeholder="Téléphone" ></InputMask>
+                        )}/>
+                         {getFormErrorMessage('tel')}
+                     </div>
+                    <div className="field">               
+                  <Controller control={control} name="adresse" rules={{required: 'Votre adresse est obligatoire'}} render={({field,fieldState}) => (
+                    <InputText {...field} autoFocus className={classNames({ 'p-invalid': fieldState.error })} placeholder="Adresse*" />
+                    )} />
+                      {getFormErrorMessage('adresse')}
+                  </div>
+        <Button type="submit" label="CREER CLIENT" loading={isLoading} className="mt-2 bg-blue-700" />
+         </form>
 </Dialog>
+  <Dialog header="Ajouter Mesure" visible={isCreateMesure} style={{ width: '50vw' }} onHide={() => setIsCreateMesure(false)}>
+  <form onSubmit={handleSubmitMesure(onSubmitMesure)} className="p-fluid space-y-2">
+                  
+                    <div className="field">
+                        <Controller control={controlMesure} name="lon" rules={{required: 'Longueur est obligatoire'}} render={({field,fieldState}) => (
+                           <InputMask mask="99" {...field} className={classNames({ 'p-invalid': fieldState.error })} placeholder="Longueur*" ></InputMask>
+                        )}/>
+                         {getFormErrorMessageMesure('lon')}
+                     </div> 
 
+                     <div className="field">
+                        <Controller control={controlMesure} name="lar" rules={{required: 'Largeur est obligatoire'}} render={({field,fieldState}) => (
+                           <InputMask mask="99" {...field} className={classNames({ 'p-invalid': fieldState.error })} placeholder="Largeur*" ></InputMask>
+                        )}/>
+                         {getFormErrorMessageMesure('lar')}
+                     </div> 
+                     <div className="field">
+                        <Controller control={controlMesure} name="cou" rules={{required: 'Téléphone est obligatoire'}} render={({field,fieldState}) => (
+                           <InputMask mask="99" {...field} className={classNames({ 'p-invalid': fieldState.error })} placeholder="Cou*" ></InputMask>
+                        )}/>
+                         {getFormErrorMessageMesure('tel')}
+                     </div> 
+                     <div className="field">
+                        <Controller control={controlMesure} name="client" render={({field}) => (
+                           <InputText {...field} hidden />
+                        )}/>
+                     </div> 
+                   
+                 <Button type="submit" label="CREER MESURE" loading={isLoadingMesure} className="mt-2 bg-blue-700" />
+    </form>
+  </Dialog>
    </div>
     </>
   )
